@@ -61,31 +61,36 @@ moneyManager.sendMoneyCallback = (data) => {
 };
 // Работа с избранным
 const favoritesWidget = new FavoritesWidget();
-
-function updateFavorites() {
-	ApiConnector.getFavorites((response) => {
-		if(response.success) {
-			favoritesWidget.clearTable();
-			favoritesWidget.fillTable(response.data);
-			moneyManager.updateUsersList(response.data);
-		}
-	});
+// 1. функция,обновляет данные в таблице
+function fillFavoritesTable(data) {
+	favoritesWidget.clearTable();
+	favoritesWidget.fillTable(data);
+	moneyManager.updateUsersList(data);
 }
-updateFavorites();
+// 2. Делаем начальный запрос списка избранного
+ApiConnector.getFavorites((response) => {
+	if(response.success) {
+		fillFavoritesTable(response.data);
+	}
+});
+// 3. Запрос на сохранение нового пользователя в избранном
 favoritesWidget.addUserCallback = (data) => {
 	ApiConnector.addUserToFavorites(data, (response) => {
 		if(response.success) {
-			updateFavorites();
+			// Сервер вернул обновленный список в response.data
+			fillFavoritesTable(response.data);
 			favoritesWidget.setMessage(true, 'Пользователь добавлен');
 		} else {
 			favoritesWidget.setMessage(false, response.error);
 		}
 	});
 };
+// 4. Запрос на удаление пользователя из списка избраное
 favoritesWidget.removeUserCallback = (data) => {
 	ApiConnector.removeUserFromFavorites(data, (response) => {
 		if(response.success) {
-			updateFavorites();
+			// Сервер вернул обновленный список в response.data
+			fillFavoritesTable(response.data);
 			favoritesWidget.setMessage(true, 'Пользователь удалён');
 		} else {
 			favoritesWidget.setMessage(false, response.error);
